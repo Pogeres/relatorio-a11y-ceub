@@ -7,24 +7,31 @@ import { createHtmlReport } from "axe-html-reporter";
 import fs from "node:fs/promises";
 import path from "node:path";
 
+if (!process.env.LOGIN) throw new Error("Env 'LOGIN' não informado");
+if (!process.env.PASSWORD) throw new Error("Env 'PASSWORD' não informado");
+
 const browser = await puppeteer.launch({
-  headless: false,
+  headless: true,
   browser: "chrome",
-  args: ["--start-maximized"],
-  defaultViewport: null,
+  defaultViewport: {
+    width: 1920,
+    height: 1080,
+    deviceScaleFactor: 1,
+    isMobile: false,
+    isLandscape: true,
+  },
 });
 const page = await browser.newPage();
 
 const basePath = "results";
 try {
-  await fs.rmdir(basePath, { recursive: true });
+  await fs.rm(basePath, { recursive: true });
   await fs.mkdir(basePath, { recursive: true });
   await fs.access(basePath, fs.constants.R_OK | fs.constants.W_OK);
 } catch {
   await fs.mkdir(basePath, { recursive: true });
 }
 
-await fs.copyFile("index.html", path.join(basePath, "index.html"));
 /**
  * @type {string[]}
  */
@@ -80,7 +87,7 @@ async function report(url) {
 
   ulHtml.push(`
     <li>
-      <details open>
+      <details name="resultado">
         <summary title="${url}">${title}</summary>
         <ul>
           <li><a href="${normalizedTitle}-lighthouse.html" target="_blank">Relatório do Lighthouse</a></li>
@@ -101,15 +108,12 @@ const pages = [
   "https://salaonline.ceub.br/user/edit.php?id=3041&course=1",
   "https://salaonline.ceub.br/reportbuilder/index.php",
   "https://salaonline.ceub.br/user/files.php",
-  "https://salaonline.ceub.br/course/view.php?id=1940",
-  "https://salaonline.ceub.br/course/view.php?id=3380",
-  "https://salaonline.ceub.br/course/view.php?id=2398",
   "https://salaonline.ceub.br/course/view.php?id=2604",
   "https://salaonline.ceub.br/mod/forum/view.php?id=29262",
-  "https://salaonline.ceub.br/course/view.php?id=1863",
+  "https://salaonline.ceub.br/mod/forum/discuss.php?d=1643",
+  "https://salaonline.ceub.br/course/view.php?id=3380",
+  "https://salaonline.ceub.br/course/view.php?id=2398",
   "https://salaonline.ceub.br/course/view.php?id=2769",
-  "https://salaonline.ceub.br/course/view.php?id=1864",
-  "https://salaonline.ceub.br/course/view.php?id=1865",
   "https://salaonline.ceub.br/course/view.php?id=1866",
 ];
 const loginPage = pages[0];
@@ -117,19 +121,22 @@ const loginPage = pages[0];
 await page.goto(loginPage);
 await report(loginPage);
 
-console.log(`[${loginPage}] Aguardando login...`);
-await page.evaluate(() => alert("Aguardando login..."));
+console.log(`[${loginPage}] Realizando login...`);
+await page.locator("#username").fill(process.env.LOGIN);
+await page.locator("#password").fill(process.env.PASSWORD);
+await page.locator("#loginbtn").click();
 await page.waitForNavigation();
+const homePage = pages[1];
+if (page.url() !== homePage) throw new Error("Erro no login");
 
 for (const url of pages.slice(1)) {
   await report(url);
 }
 
 console.log("Gerando index.html...");
-const index = await fs.open(path.join(basePath, "index.html"), "r+");
-let content = await index.readFile({ encoding: "utf-8" });
-content = content.replace("{CONTENT}", ulHtml.join(""));
-await index.writeFile(content, { encoding: "utf-8" });
-await index.close();
+let content = await fs.readFile("index.html", "utf-8");
+content = content.replace(/{CONTENT}/g, ulHtml.join(""));
+content = content.replace(/{CREATED}/g, new Date().toLocaleString("pt-br", { timeZone: "America/Sao_Paulo" }));
+await fs.writeFile(path.join(basePath, "index.html"), content, { encoding: "utf-8" });
 
 await browser.close();
