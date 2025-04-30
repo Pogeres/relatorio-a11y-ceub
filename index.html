@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>[TQS] - Relatório - Avaliação de Acessibilidade - Sala Online (Plataforma EAD CEUB) - {CREATED}</title>
+    <title>[TQS] - Relatório de Acessibilidade - Sala Online (CEUB)</title>
     <style>
       body {
         font-family: sans-serif;
@@ -13,6 +13,10 @@
         font-size: 20px;
       }
 
+      h2 {
+        font-size: 18px;
+      }
+
       summary {
         cursor: pointer;
       }
@@ -20,11 +24,46 @@
       li {
         margin-top: 8px;
       }
+
+      a {
+        color: inherit;
+      }
+
+      table {
+        border-collapse: collapse;
+        margin-bottom: 20px;
+        width: fit-content;
+      }
+
+      th, td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+      }
+
+      th {
+        background-color: #f2f2f2;
+      }
     </style>
   </head>
   <body>
-    <h1>[TQS] - Relatório - Avaliação de Acessibilidade - Sala Online (Plataforma EAD CEUB) - {CREATED}</h1>
-    <nav aria-label="Resultados da avaliação de acessibilidade">
+    <h1>[TQS] - Relatório de Acessibilidade - Sala Online (Plataforma EAD CEUB)</h1>
+    <p>Gerado em: {CREATED}</p>
+    <h2>Resumo da avaliação de acessibilidade</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Ferramenta</th>
+          <th>Métrica</th>
+          <th>Resultado</th>
+        </tr>
+      </thead>
+      <tbody>
+        {SUMMARY}
+      </tbody>
+    </table>
+    <nav>
+      <h2>Detalhes da avaliação de acessibilidade por página</h2>
       <ol>
         {CONTENT}
       </ol>

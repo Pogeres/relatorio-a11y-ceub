@@ -37,6 +37,11 @@ try {
  * @type {string[]}
  */
 const ulHtml = [];
+const axeSummary = { total: 0, critical: 0, serious: 0, moderate: 0, minor: 0 };
+/**
+ * @type {number[]}
+ */
+const lhScores = [];
 
 /**
  * @param {string} url
@@ -66,10 +71,16 @@ async function report(url) {
     page
   );
   const lhHtml = lhResult?.report;
+  const accessibilityScore = lhResult?.lhr?.categories?.accessibility?.score;
+  if (typeof accessibilityScore === 'number') lhScores.push(accessibilityScore);
 
   console.log(`[${url}] Executando Axe...`);
 
   const axeResult = await new AxePuppeteer(page).analyze();
+  axeSummary.total += axeResult.violations.length;
+  axeResult.violations.forEach(violation => {
+    if (violation.impact && axeSummary.hasOwnProperty(violation.impact)) axeSummary[violation.impact]++;
+  });
   const axeHtml = createHtmlReport({
     results: axeResult,
     options: {
@@ -133,7 +144,42 @@ for (const url of pages.slice(1)) {
 }
 
 console.log("Gerando index.html...");
+
+const averageLighthouseScore = lhScores.length > 0
+  ? (lhScores.reduce((a, b) => a + b, 0) / lhScores.length * 100).toFixed(0) + '%'
+  : '-';
+
+const summaryHtml = `
+  <tr>
+    <td rowspan="5">Axe</td>
+    <td>Total de violações</td>
+    <td>${axeSummary.total}</td>
+  </tr>
+  <tr>
+    <td>Críticas</td>
+    <td>${axeSummary.critical}</td>
+  </tr>
+  <tr>
+    <td>Sérias</td>
+    <td>${axeSummary.serious}</td>
+  </tr>
+  <tr>
+    <td>Moderadas</td>
+    <td>${axeSummary.moderate}</td>
+  </tr>
+  <tr>
+    <td>Menores</td>
+    <td>${axeSummary.minor}</td>
+  </tr>
+  <tr>
+    <td>Lighthouse</td>
+    <td>Pontuação média de acessibilidade</td>
+    <td>${averageLighthouseScore}</td>
+  </tr>
+`;
+
 let content = await fs.readFile("index.html", "utf-8");
+content = content.replace(/{SUMMARY}/g, summaryHtml);
 content = content.replace(/{CONTENT}/g, ulHtml.join(""));
 content = content.replace(/{CREATED}/g, new Date().toLocaleString("pt-br", { timeZone: "America/Sao_Paulo" }));
 await fs.writeFile(path.join(basePath, "index.html"), content, { encoding: "utf-8" });
