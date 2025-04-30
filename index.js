@@ -88,13 +88,11 @@ async function report(url) {
 
   ulHtml.push(`
     <li>
-      <details name="resultado">
-        <summary title="${url}">${title}</summary>
-        <ul>
-          <li><a href="${normalizedTitle}-lighthouse.html" target="_blank">Relatório do Lighthouse</a></li>
-          <li><a href="${normalizedTitle}-axe.html" target="_blank">Relatório do Axe</a></li>
-        </ul>
-      </details>
+      <strong><a href="${url}" target="_blank">${title}</a></strong>
+      <ul>
+        <li><a href="${normalizedTitle}-lighthouse.html" target="_blank">Relatório do Lighthouse</a></li>
+        <li><a href="${normalizedTitle}-axe.html" target="_blank">Relatório do Axe</a></li>
+      </ul>
     </li>
   `);
 }
