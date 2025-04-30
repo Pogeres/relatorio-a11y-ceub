@@ -20,6 +20,7 @@ const browser = await puppeteer.launch({
     isMobile: false,
     isLandscape: true,
   },
+  args: ["--no-sandbox"],
 });
 const page = await browser.newPage();
 
